@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row mb-4">
+  <div class="col-md-8">
+    <h2>Dashboard</h2>
+    <p class="text-muted">Bem-vindo, <strong>{{ session.get('username') }}</strong></p>
+  </div>
+  <div class="col-md-4 text-end">
+    <a class="btn btn-outline-secondary" href="/logout">Sair</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card card-stats p-3 shadow-sm">
+      <h5>Total de usuários</h5>
+      <h2>{{ total_users }}</h2>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card card-stats p-3 shadow-sm">
+      <h5>Sessões ativas</h5>
+      <h2>{{ active_sessions }}</h2>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card card-stats p-3 shadow-sm">
+      <h5>Últimos logins</h5>
+      <ul class="list-unstyled mb-0">
+        {% for u, info in recent %}
+        <li>{{ u }} — {{ info.last_login|shorttime }}</li>
+        {% else %}
+        <li>Nenhum login recente</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5>Usuários cadastrados</h5>
+        <table class="table table-users table-striped mt-3">
+          <thead><tr><th>Usuário</th><th>Registrado em</th><th>Último login</th><th>Logins</th><th>Ativo</th></tr></thead>
+          <tbody>
+            {% for uname, info in users.items() %}
+            <tr>
+              <td>{{ uname }}</td>
+              <td>{{ info.registered_at|shorttime }}</td>
+              <td>{{ info.last_login|shorttime }}</td>
+              <td>{{ info.login_count }}</td>
+              <td>{% if info.logged_in %}✅{% else %}—{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-body">
+        <h4>Verificar código MFA</h4>
+        <p>Usuário: <strong>{{ username }}</strong></p>
+        <form method="post">
+          <div class="mb-3"><label class="form-label">Código TOTP</label><input class="form-control" name="code" required></div>
+          <button class="btn btn-success">Verificar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

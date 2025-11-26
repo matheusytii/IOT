@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-body text-center">
+        <h4>Escaneie o QR Code</h4>
+        <img src="{{ img_uri }}" alt="QR Code" class="img-fluid" style="max-width:260px">
+        <p class="mt-2">Chave: <code>{{ secret }}</code></p>
+        <a class="btn btn-primary" href="/login">Ir para Login</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-body">
+        <h5>Dicas</h5>
+        <ul>
+          <li>Use Google Authenticator ou Microsoft Authenticator.</li>
+          <li>Guarde a chave de recuperação.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,6 @@
+/* Simple custom styles complementing Bootstrap */
+body { padding-top: 70px; background: #f7fafc; }
+.navbar-brand { font-weight: 700; }
+.card-stats { border-left: 4px solid #4f46e5; }
+.table-users td, .table-users th { vertical-align: middle; }
+.footer { padding: 20px 0; text-align:center; color:#6b7280; }

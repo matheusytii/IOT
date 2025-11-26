@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h3 class="card-title">Registrar novo usuário</h3>
+        <form method="post">
+          <div class="mb-3"><label class="form-label">Usuário</label><input class="form-control" name="username" required></div>
+          <div class="mb-3"><label class="form-label">Senha</label><input class="form-control" type="password" name="password" required></div>
+          <button class="btn btn-primary">Registrar & Gerar MFA</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
