@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>MQ-2 Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body { font-family: Arial, sans-serif; background:#0f1721; color:#e6eef8; padding:20px; }
+        h1 { color:#ffd166; }
+        .card { background:#111827; padding:16px; border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,0.5); }
+        .row { display:flex; gap:12px; align-items:center; }
+        .value { font-size:2rem; color:#00ff9d; }
+        .small { color:#9ca3af; font-size:0.9rem; }
+        canvas { background:#111827; padding:10px; border-radius:8px; margin-top:20px; }
+    </style>
+</head>
+
+<body>
+    <h1>📡 MQ-2 – Leitura em Tempo Real</h1>
+
+    <div class="card">
+        <div class="row">
+            <div>
+                <div class="small">Último valor</div>
+                <div id="lastValue" class="value">carregando...</div>
+            </div>
+            <div>
+                <div class="small">Horário</div>
+                <div id="time">carregando...</div>
+            </div>
+        </div>
+
+        <hr style="margin:12px 0; border-color:#1f2937;">
+        <div id="history-box" class="small">Carregando histórico...</div>
+
+        <!-- =================== GRÁFICOS ADICIONADOS =================== -->
+        <h3>📊 Gráfico de Linha</h3>
+        <canvas id="lineChart"></canvas>
+
+        <h3>📊 Gráfico de Barras</h3>
+        <canvas id="barChart"></canvas>
+
+        <h3>🍕 Gráfico de Pizza</h3>
+        <canvas id="pieChart"></canvas>
+        <!-- ============================================================ -->
+
+    </div>
+
+    <p><a href="{{ url_for('dashboard') }}">Voltar ao dashboard</a> • <a href="{{ url_for('logout') }}">Sair</a></p>
+
+    <!-- ChartJS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        async function loadLatest() {
+            const res = await fetch("/api/mq2/latest");
+            const json = await res.json();
+            if (json.error) {
+                document.getElementById("lastValue").innerText = "erro";
+                document.getElementById("time").innerText = json.error;
+                return;
+            }
+            document.getElementById("lastValue").innerText = json.gas_value;
+            document.getElementById("time").innerText = json.timestamp;
+        }
+
+        async function loadHistory() {
+            const res = await fetch("/api/mq2/history");
+            const json = await res.json();
+            if (json.error) {
+                document.getElementById("history-box").innerText = "Erro ao carregar histórico.";
+                return;
+            }
+            if (!Array.isArray(json) || json.length === 0) {
+                document.getElementById("history-box").innerText = "Sem histórico disponível.";
+                return;
+            }
+
+            let html = "<strong>Últimas leituras:</strong><ul>";
+            json.slice(-10).reverse().forEach(item => {
+                html += `<li>${item.timestamp} — ${item.gas_value}</li>`;
+            });
+            html += "</ul>";
+            document.getElementById("history-box").innerHTML = html;
+
+            renderCharts(json);
+        }
+
+        // ========================== GRÁFICOS ==========================
+        let lineChart, barChart, pieChart;
+
+        function renderCharts(data) {
+            const labels = data.map(d => d.timestamp);
+            const values = data.map(d => Number(d.gas_value));
+
+            // Line chart
+            if (lineChart) lineChart.destroy();
+            lineChart = new Chart(document.getElementById('lineChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Leituras MQ-2',
+                        data: values,
+                        borderColor: 'rgba(255, 209, 102, 1)',
+                        tension: 0.3
+                    }]
+                }
+            });
+
+            // Bar chart
+            if (barChart) barChart.destroy();
+            barChart = new Chart(document.getElementById('barChart'), {
+                type: 'bar',
+                data: {
+                    labels: labels.slice(-10),
+                    datasets: [{
+                        label: 'Últimas Leituras',
+                        data: values.slice(-10),
+                        backgroundColor: 'rgba(0, 255, 157, .8)'
+                    }]
+                }
+            });
+
+            // Pie chart
+            if (pieChart) pieChart.destroy();
+            pieChart = new Chart(document.getElementById('pieChart'), {
+                type: 'pie',
+                data: {
+                    labels: ["Baixo", "Médio", "Alto"],
+                    datasets: [{
+                        data: [
+                            values.filter(v => v < 200).length,
+                            values.filter(v => v >= 200 && v < 400).length,
+                            values.filter(v => v >= 400).length
+                        ],
+                        backgroundColor: [
+                            "rgba(0,255,157,0.7)",
+                            "rgba(255,209,102,0.8)",
+                            "rgba(255,80,80,0.8)"
+                        ]
+                    }]
+                }
+            });
+        }
+        // ==================================================================
+
+        async function refreshAll() {
+            await loadLatest();
+            await loadHistory();
+        }
+
+        refreshAll();
+        setInterval(refreshAll, 7000);
+    </script>
+
+</body>
+</html>

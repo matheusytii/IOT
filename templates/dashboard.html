@@ -11,18 +11,24 @@
 </div>
 
 <div class="row g-3">
+
+  <!-- CARD TOTAL DE USUÁRIOS -->
   <div class="col-md-4">
     <div class="card card-stats p-3 shadow-sm">
       <h5>Total de usuários</h5>
       <h2>{{ total_users }}</h2>
     </div>
   </div>
+
+  <!-- CARD SESSÕES ATIVAS -->
   <div class="col-md-4">
     <div class="card card-stats p-3 shadow-sm">
       <h5>Sessões ativas</h5>
       <h2>{{ active_sessions }}</h2>
     </div>
   </div>
+
+  <!-- CARD ÚLTIMOS LOGINS -->
   <div class="col-md-4">
     <div class="card card-stats p-3 shadow-sm">
       <h5>Últimos logins</h5>
@@ -35,15 +41,40 @@
       </ul>
     </div>
   </div>
+
 </div>
 
+<!-- NOVA LINHA COM O CARD DO MQ-2 -->
+<div class="row g-3 mt-3">
+
+  <div class="col-md-4">
+    <a href="{{ url_for('mq2_page') }}">
+      <div class="card card-stats p-3 shadow-sm" style="cursor:pointer;">
+        <h5>MQ-2 – Monitoramento</h5>
+        <h2 style="font-size:1.6rem;">📡 Ver Dashboard</h2>
+        <p class="text-muted" style="margin:0;">Acompanhar leitura do sensor em tempo real</p>
+      </div>
+    </a>
+  </div>
+
+</div>
+
+<!-- TABELA DE USUÁRIOS -->
 <div class="row mt-4">
   <div class="col-12">
     <div class="card shadow-sm">
       <div class="card-body">
         <h5>Usuários cadastrados</h5>
         <table class="table table-users table-striped mt-3">
-          <thead><tr><th>Usuário</th><th>Registrado em</th><th>Último login</th><th>Logins</th><th>Ativo</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Usuário</th>
+              <th>Registrado em</th>
+              <th>Último login</th>
+              <th>Logins</th>
+              <th>Ativo</th>
+            </tr>
+          </thead>
           <tbody>
             {% for uname, info in users.items() %}
             <tr>
@@ -60,4 +91,5 @@
     </div>
   </div>
 </div>
+
 {% endblock %}

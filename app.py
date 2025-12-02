@@ -1,14 +1,24 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-import pyotp, qrcode, io, base64, os
-from werkzeug.security import generate_password_hash, check_password_hash
+import os
+import io
+import base64
 from datetime import datetime
 
+import requests
+import pyotp
+import qrcode
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+
+# -------------------------
+# App config
+# -------------------------
 app = Flask(__name__)
 app.secret_key = os.getenv("APP_SECRET", "replace-with-a-secure-random-secret-in-production")
 
-# In-memory user store for demo purposes (use a DB for production)
+# -------------------------
+# In-memory user store (demo)
+# -------------------------
 users = {
-    # demo user: password 'password'
     "demo": {
         "password": generate_password_hash("password"),
         "mfa_secret": pyotp.random_base32(),
@@ -19,8 +29,10 @@ users = {
     }
 }
 
+# -------------------------
+# Helpers
+# -------------------------
 def qrcode_data_uri(data):
-    import qrcode, io, base64
     img = qrcode.make(data)
     buffer = io.BytesIO()
     img.save(buffer, format="PNG")
@@ -37,6 +49,15 @@ def shorttime(s):
     except:
         return s
 
+# -------------------------
+# ThingSpeak configuration
+# -------------------------
+THINGSPEAK_URL = "https://api.thingspeak.com/channels/3092047/fields/1.json"
+THINGSPEAK_READ_KEY = "FAAOZXTN40Q8J8M9"   # sua read key, mantenha segura
+
+# -------------------------
+# Auth / MFA routes
+# -------------------------
 @app.route("/")
 def index():
     if session.get("username") and session.get("mfa_validated"):
@@ -126,7 +147,9 @@ def logout():
     flash("Desconectado.", "info")
     return redirect(url_for("index"))
 
+# -------------------------
 # Simple API endpoint for quick stats (optional)
+# -------------------------
 @app.route("/api/stats")
 def api_stats():
     return jsonify({
@@ -135,5 +158,93 @@ def api_stats():
         "timestamp": datetime.utcnow().isoformat()
     })
 
+# -------------------------
+# ThingSpeak endpoints (MQ-2)
+# -------------------------
+@app.route("/api/mq2/latest")
+def get_latest_mq2():
+    try:
+        url = f"{THINGSPEAK_URL}?api_key={THINGSPEAK_READ_KEY}&results=1"
+        response = requests.get(url, timeout=6)
+        if response.status_code != 200:
+            return jsonify({"error": "Erro ao acessar ThingSpeak", "status": response.status_code}), 500
+        feed = response.json().get("feeds", [])
+        if not feed:
+            return jsonify({"error": "Nenhum dado disponível"}), 404
+        last = feed[0]
+        return jsonify({
+            "gas_value": last.get("field1"),
+            "timestamp": last.get("created_at")
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/mq2/history")
+def get_history_mq2():
+    try:
+        url = f"{THINGSPEAK_URL}?api_key={THINGSPEAK_READ_KEY}&results=100"
+        response = requests.get(url, timeout=8)
+        if response.status_code != 200:
+            return jsonify({"error": "Erro ao acessar ThingSpeak", "status": response.status_code}), 500
+        data = response.json().get("feeds", [])
+        history = []
+        for item in data:
+            history.append({
+                "gas_value": item.get("field1"),
+                "timestamp": item.get("created_at")
+            })
+        return jsonify(history)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# -------------------------
+# Page that shows MQ-2 (only after MFA)
+# -------------------------
+@app.route("/mq2")
+def mq2_page():
+    if not (session.get("username") and session.get("mfa_validated")):
+        flash("Faça login e valide o MFA.", "danger")
+        return redirect(url_for("login"))
+    return render_template("mq2.html")
+
+@app.route("/api/mq2/graph-data")
+def mq2_graph_data():
+    try:
+        url = f"{THINGSPEAK_URL}?api_key={THINGSPEAK_READ_KEY}&results=50"
+        response = requests.get(url, timeout=8)
+
+        if response.status_code != 200:
+            return jsonify({"error": "Erro ao acessar ThingSpeak"}), 500
+
+        data = response.json().get("feeds", [])
+
+        timestamps = []
+        values = []
+
+        for item in data:
+            v = item.get("field1")
+            if v is None:
+                continue
+            try:
+                v = float(v)
+            except:
+                continue
+
+            timestamps.append(item.get("created_at"))
+            values.append(v)
+
+        return jsonify({
+            "labels": timestamps,
+            "values": values
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# -------------------------
+# Run app (dev). For Render/Gunicorn remove this block.
+# -------------------------
 if __name__ == "__main__":
+    # modo dev com reload
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)), debug=True)
