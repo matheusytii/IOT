@@ -1,348 +1,248 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MQ-2 Dashboard</title>
-    
-    <!-- Carrega Tailwind CSS para um estilo moderno e responsivo -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'primary': '#0f172a',       /* Fundo Principal Escuro (slate-900) */
-                        'card': '#1e293b',          /* Fundo do Card (slate-800) */
-                        'accent': '#3b82f6',        /* Azul (Destaque Principal) */
-                        'success': '#10b981',       /* Verde Esmeralda (Valores) */
-                        'warning': '#f59e0b',       /* Amarelo (Médio) */
-                        'danger': '#ef4444',        /* Vermelho (Alto) */
-                        'text-light': '#f1f5f9',    /* Texto Principal (slate-100) */
-                        'text-subtle': '#94a3b8',   /* Texto Secundário (slate-400) */
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
     <style>
-        /* Configuração global para gráficos Chart.js em tema escuro */
+        /* ===================== DESIGN COMPLETO NOVO ===================== */
+
+        body {
+            margin: 0;
+            padding: 25px;
+            font-family: "Segoe UI", sans-serif;
+            background: #0d1117;
+            color: #e6eef8;
+        }
+
+        h1 {
+            margin-top: 0;
+            font-weight: 600;
+            font-size: 2.4rem;
+            color: #00ffa3;
+            text-shadow: 0 0 8px #00ffa3;
+        }
+
+        .card {
+            background: #111827;
+            padding: 28px;
+            border-radius: 14px;
+            border: 1px solid #1f2937;
+            box-shadow: 0 0 25px rgba(0, 255, 157, 0.08);
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity:0; transform: translateY(10px); }
+            to   { opacity:1; transform: translateY(0); }
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 18px;
+        }
+
+        .value-box {
+            background: #0f1721;
+            padding: 18px 22px;
+            border-radius: 10px;
+            border: 1px solid #1f2937;
+            box-shadow: inset 0 0 12px rgba(0,255,157,0.12);
+            min-width: 220px;
+        }
+
+        .small {
+            font-size: 0.9rem;
+            color: #9ca3af;
+            letter-spacing: 0.5px;
+        }
+
+        .value {
+            font-size: 2.4rem;
+            color: #00ffa3;
+            font-weight: bold;
+            text-shadow: 0 0 12px #00ffa3;
+        }
+
+        #time {
+            font-size: 1.5rem;
+            margin-top: 5px;
+        }
+
+        hr {
+            border: none;
+            border-bottom: 1px solid #1f2937;
+            margin: 22px 0;
+        }
+
+        h3 {
+            margin-top: 28px;
+            color: #ffd166;
+            text-shadow: 0 0 6px #ffd166aa;
+        }
+
         canvas {
-            background-color: transparent !important; /* Garante que o fundo do Chart.js seja transparente */
-            max-height: 350px; 
-            width: 100% !important;
-            height: auto !important;
+            background: #0f1721;
+            padding: 16px;
+            border-radius: 10px;
+            border: 1px solid #1f2937;
+            margin-top: 12px;
+            box-shadow: 0 0 14px rgba(0,255,157,0.05);
         }
-        /* Ajuste do Título para melhor legibilidade */
-        .card-header {
-            border-bottom: 1px solid theme('colors.slate.700');
+
+        a {
+            color: #00ffa3;
+            font-weight: bold;
+            text-decoration: none;
         }
+
+        a:hover {
+            text-shadow: 0 0 10px #00ffa3;
+        }
+
+        ul li {
+            padding: 4px 0;
+        }
+
+        @media(max-width: 760px) {
+            .row { flex-direction: column; }
+            .value { font-size: 2rem; }
+            .card { padding: 20px; }
+        }
+
     </style>
-    <script>
-        // Configuração global para gráficos Chart.js
-        Chart.defaults.color = 'rgb(241 245 249)'; // text-light
-        Chart.defaults.borderColor = 'rgb(51 65 85)'; // slate-700
-    </script>
 </head>
 
-<body class="bg-primary min-h-screen p-4 md:p-8 font-sans antialiased">
-    <div class="max-w-6xl mx-auto">
-        <h1 class="text-3xl md:text-4xl font-extrabold text-accent text-center mb-8 tracking-tight flex items-center justify-center">
-            <svg class="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-            MQ-2 – Monitoramento em Tempo Real
-        </h1>
+<body>
 
-        <div class="bg-card rounded-xl shadow-2xl p-4 md:p-8 space-y-8 border border-slate-700">
-            
-            <!-- SEÇÃO DE MÉTRICAS PRINCIPAIS -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-4 card-header">
-                
-                <!-- Último Valor -->
-                <div class="p-4 bg-slate-800 rounded-lg shadow-inner border border-slate-700">
-                    <div class="text-sm font-medium text-text-subtle uppercase">Último Valor de Gás (PPM)</div>
-                    <div id="lastValue" class="text-5xl font-extrabold text-success mt-1 tracking-wider">
-                        carregando...
-                    </div>
-                </div>
+    <h1>📡 MQ-2 – Monitoramento em Tempo Real</h1>
 
-                <!-- Horário da Leitura -->
-                <div class="p-4 bg-slate-800 rounded-lg shadow-inner border border-slate-700">
-                    <div class="text-sm font-medium text-text-subtle uppercase">Horário da Última Leitura</div>
-                    <div id="time" class="text-3xl font-bold text-text-light mt-2">
-                        carregando...
-                    </div>
-                </div>
+    <div class="card">
+
+        <div class="row">
+
+            <div class="value-box">
+                <div class="small">Último valor</div>
+                <div id="lastValue" class="value">carregando...</div>
             </div>
 
-            <!-- HISTÓRICO RECENTE -->
-            <div>
-                <h2 class="text-xl font-semibold text-text-light mb-4">Histórico Recente</h2>
-                <div id="history-box" class="p-4 bg-slate-700/50 rounded-lg text-sm text-text-light">
-                    Carregando histórico...
-                </div>
+            <div class="value-box">
+                <div class="small">Horário da leitura</div>
+                <div id="time">carregando...</div>
             </div>
 
-
-            <!-- GRÁFICOS -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                
-                <!-- Gráfico de Linha (Tendência) -->
-                <div class="bg-slate-800 p-4 rounded-lg shadow-lg border border-slate-700">
-                    <h3 class="text-lg font-semibold text-text-light mb-3 border-b border-slate-700 pb-2">📈 Gráfico de Linha (Tendência)</h3>
-                    <canvas id="lineChart" class=""></canvas>
-                </div>
-                
-                <!-- Gráfico de Barras (Últimas Leituras) -->
-                <div class="bg-slate-800 p-4 rounded-lg shadow-lg border border-slate-700">
-                    <h3 class="text-lg font-semibold text-text-light mb-3 border-b border-slate-700 pb-2">📊 Gráfico de Barras (Últimos 10)</h3>
-                    <canvas id="barChart" class=""></canvas>
-                </div>
-
-                <!-- Gráfico de Pizza (Distribuição) -->
-                <div class="bg-slate-800 p-4 rounded-lg shadow-lg border border-slate-700 lg:col-span-2">
-                    <h3 class="text-lg font-semibold text-text-light mb-3 border-b border-slate-700 pb-2">⭕ Gráfico de Distribuição</h3>
-                    <div class="max-w-xl mx-auto"><canvas id="pieChart"></canvas></div>
-                </div>
-
-            </div>
         </div>
 
-        <!-- LINKS DE NAVEGAÇÃO -->
-        <p class="text-center mt-8 space-x-4">
-            <a href="{{ url_for('dashboard') }}" class="inline-flex items-center px-4 py-2 bg-slate-700 text-text-light font-medium rounded-full hover:bg-slate-600 transition duration-150">
-                Voltar ao dashboard
-            </a>
-            <a href="{{ url_for('logout') }}" class="inline-flex items-center px-4 py-2 bg-danger text-white font-medium rounded-full hover:bg-red-600 transition duration-150">
-                Sair
-            </a>
-        </p>
+        <hr>
+
+        <div id="history-box" class="small">Carregando histórico...</div>
+
+        <h3>📈 Gráfico de Linha</h3>
+        <canvas id="lineChart"></canvas>
+
+        <h3>📊 Gráfico de Barras</h3>
+        <canvas id="barChart"></canvas>
+
+        <h3>🥧 Gráfico de Pizza</h3>
+        <canvas id="pieChart"></canvas>
+
     </div>
 
+    <p style="margin-top: 20px;">
+        <a href="{{ url_for('dashboard') }}">⬅ Voltar</a> • 
+        <a href="{{ url_for('logout') }}">Sair</a>
+    </p>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- ===================== JS COMPLETO (FUNCIONAL) ===================== -->
     <script>
-        let lineChart, barChart, pieChart;
-
-        /**
-         * Retorna a cor Tailwind CSS baseada no valor do gás.
-         * @param {number} value - O valor do sensor.
-         * @returns {string} - Nome da classe Tailwind.
-         */
-        function getColorByValue(value) {
-            if (value >= 400) return 'text-danger'; // Alto
-            if (value >= 200) return 'text-warning'; // Médio
-            return 'text-success'; // Baixo
-        }
-
-        /**
-         * Formata a string de timestamp ISO (ex: '2025-12-03T23:45:00Z') para exibição local.
-         * @param {string} isoString - Timestamp ISO 8601
-         * @returns {string} - Data/Hora formatada em pt-BR.
-         */
-        function formatTimestamp(isoString) {
-            if (!isoString) return 'N/D';
-            try {
-                const date = new Date(isoString);
-                // Retorna Data e Hora formatadas
-                return date.toLocaleDateString('pt-BR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                }).replace(',', ''); 
-            } catch (e) {
-                console.error("Erro ao formatar data:", isoString, e);
-                return 'Formato Inválido';
-            }
-        }
-
-
         async function loadLatest() {
-            try {
-                const res = await fetch("/api/mq2/latest");
-                const json = await res.json();
-                
-                const lastValueEl = document.getElementById("lastValue");
-                const timeEl = document.getElementById("time");
+            const res = await fetch("/api/mq2/latest");
+            const json = await res.json();
 
-                // Limpa estilos de cor anteriores
-                lastValueEl.className = 'text-5xl font-extrabold mt-1 tracking-wider'; 
-
-                if (json.error) {
-                    lastValueEl.innerText = "ERRO";
-                    timeEl.innerText = json.error;
-                    lastValueEl.classList.add('text-danger');
-                    return;
-                }
-                
-                const value = parseFloat(json.gas_value);
-                
-                // 1. Atualiza e estiliza o valor principal
-                lastValueEl.innerText = isNaN(value) ? 'N/D' : value.toFixed(2) + " PPM";
-                if (!isNaN(value)) {
-                    lastValueEl.classList.add(getColorByValue(value));
-                } else {
-                    lastValueEl.classList.add('text-text-subtle');
-                }
-                
-                // 2. Atualiza o horário formatado (usando a formatação do JS)
-                if (json.timestamp) {
-                    timeEl.innerText = formatTimestamp(json.timestamp);
-                } else {
-                    timeEl.innerText = 'Sem hora';
-                }
-            } catch (error) {
-                console.error("Erro ao carregar o último dado:", error);
-                const lastValueEl = document.getElementById("lastValue");
-                const timeEl = document.getElementById("time");
-                lastValueEl.innerText = "FALHA";
-                lastValueEl.classList.add('text-danger');
-                timeEl.innerText = "Erro de Conexão";
+            if (json.error) {
+                document.getElementById("lastValue").innerText = "Erro";
+                document.getElementById("time").innerText = json.error;
+                return;
             }
+
+            document.getElementById("lastValue").innerText = json.gas_value;
+            document.getElementById("time").innerText = json.timestamp;
         }
 
         async function loadHistory() {
-            try {
-                const res = await fetch("/api/mq2/graph-data"); 
-                const json = await res.json();
-                
-                const historyBoxEl = document.getElementById("history-box");
+            const res = await fetch("/api/mq2/graph-data");
+            const json = await res.json();
 
-                if (json.error) {
-                    historyBoxEl.innerHTML = `<p class="text-danger"><strong>Erro ao carregar histórico:</strong> ${json.error}</p>`;
-                    return;
-                }
-
-                const labels = json.labels || []; // Timestamps ISO brutos
-                const values = json.values || [];
-                
-                if (labels.length === 0) {
-                    historyBoxEl.innerHTML = "<p class='text-text-subtle'><strong>Sem histórico:</strong> Nenhum dado disponível no MongoDB.</p>";
-                    // Destroi gráficos se não houver dados
-                    if (lineChart) lineChart.destroy();
-                    if (barChart) barChart.destroy();
-                    if (pieChart) pieChart.destroy();
-                    return;
-                }
-
-                // Formata todos os labels para exibição
-                const formattedLabels = labels.map(formatTimestamp); 
-
-                // Cria a lista de histórico (últimas 10 leituras em formato de chips)
-                let html = `<strong class="text-text-light block mb-2">Últimas ${Math.min(10, labels.length)} leituras:</strong>`;
-                html += `<div class="flex flex-wrap gap-2 text-xs">`;
-                
-                // Mostra apenas as 10 leituras mais recentes
-                const count = labels.length;
-                for (let i = 1; i <= Math.min(10, count); i++) {
-                    const index = count - i; 
-                    const value = parseFloat(values[index]);
-                    const colorClass = getColorByValue(value).replace('text-', 'bg-').replace('success', 'emerald').replace('warning', 'amber').replace('danger', 'red') + '-600';
-                    
-                    html += `<span class="px-3 py-1 rounded-full ${colorClass} text-white shadow-md">
-                                ${formattedLabels[index].split(' ')[1]} — ${value.toFixed(2)} PPM
-                            </span>`; // Usando apenas a HORA para os chips
-                }
-                html += "</div>";
-                historyBoxEl.innerHTML = html;
-
-                renderCharts(formattedLabels, values); // Passa os labels formatados para os gráficos
-            } catch (error) {
-                console.error("Erro ao carregar histórico:", error);
-                document.getElementById("history-box").innerHTML = `<p class="text-danger"><strong>Erro de Conexão:</strong> Não foi possível buscar o histórico da API.</p>`;
+            if (json.error) {
+                document.getElementById("history-box").innerText =
+                    "Erro ao carregar histórico: " + json.error;
+                return;
             }
+
+            const labels = json.labels || [];
+            const values = json.values || [];
+
+            if (labels.length === 0) {
+                document.getElementById("history-box").innerText =
+                    "Sem histórico disponível no MongoDB.";
+                return;
+            }
+
+            let html = `<strong>Últimas leituras (${labels.length} total):</strong><ul>`;
+
+            for (let i = 1; i <= Math.min(10, labels.length); i++) {
+                let index = labels.length - i;
+                html += `<li>${labels[index]} — ${values[index]}</li>`;
+            }
+
+            html += "</ul>";
+            document.getElementById("history-box").innerHTML = html;
+
+            renderCharts(labels, values);
         }
 
-        function renderCharts(labels, values) { 
-            const numericValues = values.map(d => Number(d));
-            const chartColors = {
-                accent: '#3b82f6',      // blue-500
-                success: '#10b981',     // emerald-500
-                warning: '#f59e0b',     // amber-500
-                danger: '#ef4444'       // red-500
-            };
-            
-            // Função para mapear cores para cada barra/ponto
-            const dynamicBackgroundColors = numericValues.map(v => {
-                if (v >= 400) return chartColors.danger;
-                if (v >= 200) return chartColors.warning;
-                return chartColors.success;
-            });
+        let lineChart, barChart, pieChart;
 
-            // --- 1. Gráfico de Linha (Tendência) ---
+        function renderCharts(labels, values) {
+            const numericValues = values.map(n => Number(n));
+
             if (lineChart) lineChart.destroy();
             lineChart = new Chart(document.getElementById('lineChart'), {
                 type: 'line',
                 data: {
-                    labels: labels, // Usando labels formatados
+                    labels,
                     datasets: [{
-                        label: 'Leituras MQ-2',
+                        label: "Leituras MQ-2",
                         data: numericValues,
-                        borderColor: chartColors.accent, 
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)', /* Sombra suave do accent */
-                        borderWidth: 2,
-                        tension: 0.4,
-                        pointRadius: 1,
-                        pointBackgroundColor: chartColors.accent
+                        borderColor: "#00ffa3",
+                        tension: 0.35,
+                        borderWidth: 2
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { ticks: { color: 'var(--text-subtle)' }, grid: { color: 'rgb(51 65 85)' } },
-                        y: { 
-                            ticks: { color: 'var(--text-subtle)' }, 
-                            grid: { color: 'rgb(51 65 85)' },
-                            title: { display: true, text: 'Valor (PPM)', color: 'var(--text-subtle)' }
-                        }
-                    },
-                    plugins: { legend: { display: false } }
-                }
+                options: { scales: { y: { color: "#fff" }, x: { color: "#fff" } } }
             });
-
-            // --- 2. Gráfico de Barras (Últimos 10) ---
-            const last10Labels = labels.slice(-10).map(l => l.split(' ')[1]); // Pega apenas a hora
-            const last10Values = numericValues.slice(-10);
-            const last10Colors = dynamicBackgroundColors.slice(-10);
 
             if (barChart) barChart.destroy();
             barChart = new Chart(document.getElementById('barChart'), {
                 type: 'bar',
                 data: {
-                    labels: last10Labels, // Usando apenas a hora
+                    labels: labels.slice(-10),
                     datasets: [{
-                        label: 'Últimas 10 Leituras',
-                        data: last10Values,
-                        backgroundColor: last10Colors, /* Cores dinâmicas por valor */
-                        borderRadius: 6
+                        label: "Últimas Leituras",
+                        data: numericValues.slice(-10),
+                        backgroundColor: "#ffd166"
                     }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { ticks: { color: 'var(--text-subtle)' }, grid: { display: false } },
-                        y: { 
-                            ticks: { color: 'var(--text-subtle)' }, 
-                            grid: { color: 'rgb(51 65 85)' } 
-                        }
-                    },
-                    plugins: { legend: { display: false } }
                 }
             });
 
-            // --- 3. Gráfico de Pizza (Distribuição de Níveis) ---
             if (pieChart) pieChart.destroy();
             pieChart = new Chart(document.getElementById('pieChart'), {
-                type: 'doughnut', 
+                type: 'pie',
                 data: {
-                    labels: ["Baixo (< 200 PPM)", "Médio (200-400 PPM)", "Alto (> 400 PPM)"],
+                    labels: ["Baixo", "Médio", "Alto"],
                     datasets: [{
                         data: [
                             numericValues.filter(v => v < 200).length,
@@ -350,21 +250,11 @@
                             numericValues.filter(v => v >= 400).length
                         ],
                         backgroundColor: [
-                            chartColors.success, 
-                            chartColors.warning, 
-                            chartColors.danger
-                        ],
-                        hoverOffset: 16, 
-                        borderWidth: 4,
-                        borderColor: chartColors.card // Cor da borda para contraste
+                            "#00ffa3dd",
+                            "#ffd166dd",
+                            "#ff4d4ddd"
+                        ]
                     }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'right', labels: { color: 'var(--text-light)', padding: 20 } }
-                    }
                 }
             });
         }
@@ -374,11 +264,9 @@
             await loadHistory();
         }
 
-        // Inicia e configura a atualização periódica
-        document.addEventListener('DOMContentLoaded', () => {
-             refreshAll();
-             setInterval(refreshAll, 7000); // Atualiza tudo a cada 7 segundos
-        });
+        refreshAll();
+        setInterval(refreshAll, 7000);
     </script>
+
 </body>
 </html>
