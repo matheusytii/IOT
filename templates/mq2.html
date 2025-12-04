@@ -224,31 +224,32 @@
                 if (labels.length === 0) {
                     historyBoxEl.innerHTML = "<p class='text-text-subtle'><strong>Sem histórico:</strong> Nenhum dado disponível no MongoDB.</p>";
                     // Destroi gráficos se não houver dados
-                    if (lineChart) lineChart.destroy();
-                    if (barChart) barChart.destroy();
-                    if (pieChart) pieChart.destroy();
+                    if (lineChart) { lineChart.destroy(); lineChart = null; }
+                    if (barChart) { barChart.destroy(); barChart = null; }
+                    if (pieChart) { pieChart.destroy(); pieChart = null; }
                     return;
                 }
 
                 // Formata todos os labels para exibição
                 const formattedLabels = labels.map(formatTimestamp); 
 
-                // Cria a lista de histórico (últimas 10 leituras em formato de chips)
-                let html = `<strong class="text-text-light block mb-2">Últimas ${Math.min(10, labels.length)} leituras:</strong>`;
-                html += `<div class="flex flex-wrap gap-2 text-xs">`;
+// Cria a lista de histórico (últimas 10 leituras em formato de chips)
+                let html = `<strong>Últimas ${Math.min(10, labels.length)} leituras:</strong><ul class="list-none p-0 m-0 space-y-1">`;
                 
                 // Mostra apenas as 10 leituras mais recentes
                 const count = labels.length;
-                for (let i = 1; i <= Math.min(10, count); i++) {
-                    const index = count - i; 
-                    const value = parseFloat(values[index]);
-                    const colorClass = getColorByValue(value).replace('text-', 'bg-').replace('success', 'emerald').replace('warning', 'amber').replace('danger', 'red') + '-600';
+                // Itera de trás para frente para pegar as mais recentes
+                for (let i = count - 1; i >= Math.max(0, count - 10); i--) {
+                    const value = parseFloat(values[i]);
+                    const time = formattedLabels[i].split(' ')[1];
+                    const colorClass = getColorByValue(value).replace('text-', 'text-');
                     
-                    html += `<span class="px-3 py-1 rounded-full ${colorClass} text-white shadow-md">
-                                ${formattedLabels[index].split(' ')[1]} — ${value.toFixed(2)} PPM
-                            </span>`; // Usando apenas a HORA para os chips
+                    html += `<li class="flex justify-between items-center">
+                                <span class="text-text-subtle">${time}</span>
+                                <span class="font-bold ${colorClass}">${value.toFixed(2)} PPM</span>
+                            </li>`;
                 }
-                html += "</div>";
+                html += "</ul>";
                 historyBoxEl.innerHTML = html;
 
                 renderCharts(formattedLabels, values); // Passa os labels formatados para os gráficos
@@ -275,7 +276,7 @@
             });
 
             // --- 1. Gráfico de Linha (Tendência) ---
-            if (lineChart) lineChart.destroy();
+            if (lineChart) { lineChart.destroy(); lineChart = null; }
             lineChart = new Chart(document.getElementById('lineChart'), {
                 type: 'line',
                 data: {
@@ -311,7 +312,7 @@
             const last10Values = numericValues.slice(-10);
             const last10Colors = dynamicBackgroundColors.slice(-10);
 
-            if (barChart) barChart.destroy();
+            if (barChart) { barChart.destroy(); barChart = null; }
             barChart = new Chart(document.getElementById('barChart'), {
                 type: 'bar',
                 data: {
@@ -338,7 +339,7 @@
             });
 
             // --- 3. Gráfico de Pizza (Distribuição de Níveis) ---
-            if (pieChart) pieChart.destroy();
+            if (pieChart) { pieChart.destroy(); pieChart = null; }
             pieChart = new Chart(document.getElementById('pieChart'), {
                 type: 'doughnut', 
                 data: {
