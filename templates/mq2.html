@@ -1,272 +1,205 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-    <meta charset="utf-8">
-    <title>MQ-2 Dashboard</title>
-    <style>
-        /* ===================== DESIGN COMPLETO NOVO ===================== */
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MQ-2 Dashboard (ThingSpeak)</title>
 
-        body {
-            margin: 0;
-            padding: 25px;
-            font-family: "Segoe UI", sans-serif;
-            background: #0d1117;
-            color: #e6eef8;
-        }
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-        h1 {
-            margin-top: 0;
-            font-weight: 600;
-            font-size: 2.4rem;
-            color: #00ffa3;
-            text-shadow: 0 0 8px #00ffa3;
-        }
-
-        .card {
-            background: #111827;
-            padding: 28px;
-            border-radius: 14px;
-            border: 1px solid #1f2937;
-            box-shadow: 0 0 25px rgba(0, 255, 157, 0.08);
-            animation: fadeIn 0.4s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity:0; transform: translateY(10px); }
-            to   { opacity:1; transform: translateY(0); }
-        }
-
-        .row {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            gap: 18px;
-        }
-
-        .value-box {
-            background: #0f1721;
-            padding: 18px 22px;
-            border-radius: 10px;
-            border: 1px solid #1f2937;
-            box-shadow: inset 0 0 12px rgba(0,255,157,0.12);
-            min-width: 220px;
-        }
-
-        .small {
-            font-size: 0.9rem;
-            color: #9ca3af;
-            letter-spacing: 0.5px;
-        }
-
-        .value {
-            font-size: 2.4rem;
-            color: #00ffa3;
-            font-weight: bold;
-            text-shadow: 0 0 12px #00ffa3;
-        }
-
-        #time {
-            font-size: 1.5rem;
-            margin-top: 5px;
-        }
-
-        hr {
-            border: none;
-            border-bottom: 1px solid #1f2937;
-            margin: 22px 0;
-        }
-
-        h3 {
-            margin-top: 28px;
-            color: #ffd166;
-            text-shadow: 0 0 6px #ffd166aa;
-        }
-
-        canvas {
-            background: #0f1721;
-            padding: 16px;
-            border-radius: 10px;
-            border: 1px solid #1f2937;
-            margin-top: 12px;
-            box-shadow: 0 0 14px rgba(0,255,157,0.05);
-        }
-
-        a {
-            color: #00ffa3;
-            font-weight: bold;
-            text-decoration: none;
-        }
-
-        a:hover {
-            text-shadow: 0 0 10px #00ffa3;
-        }
-
-        ul li {
-            padding: 4px 0;
-        }
-
-        @media(max-width: 760px) {
-            .row { flex-direction: column; }
-            .value { font-size: 2rem; }
-            .card { padding: 20px; }
-        }
-
-    </style>
+  <style>
+    body { background:#0f1721; color:#e6eef8; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+    .card { background:#1e293b; border:1px solid #334155; border-radius:12px; padding:16px; }
+    canvas { width:100% !important; max-height:360px; }
+  </style>
 </head>
+<body class="min-h-screen p-6">
+  <div class="max-w-6xl mx-auto space-y-6">
+    <header class="flex items-center justify-between">
+      <h1 class="text-3xl font-extrabold text-[#3b82f6]">MQ-2 — Dashboard (ThingSpeak)</h1>
+      <div class="text-sm text-slate-400">Fonte: ThingSpeak channel 3092047</div>
+    </header>
 
-<body>
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="card">
+        <div class="text-sm text-slate-400 uppercase">Último Valor (PPM)</div>
+        <div id="lastValue" class="text-5xl font-extrabold mt-2 text-[#10b981]">carregando...</div>
+      </div>
+      <div class="card">
+        <div class="text-sm text-slate-400 uppercase">Horário da Última Leitura</div>
+        <div id="lastTime" class="text-2xl mt-2">carregando...</div>
+      </div>
+    </section>
 
-    <h1>📡 MQ-2 – Monitoramento em Tempo Real</h1>
+    <section class="card">
+      <h2 class="text-lg font-semibold mb-3">Histórico Recente</h2>
+      <div id="historyBox" class="text-sm text-slate-200">Carregando histórico...</div>
+    </section>
 
-    <div class="card">
-
-        <div class="row">
-
-            <div class="value-box">
-                <div class="small">Último valor</div>
-                <div id="lastValue" class="value">carregando...</div>
-            </div>
-
-            <div class="value-box">
-                <div class="small">Horário da leitura</div>
-                <div id="time">carregando...</div>
-            </div>
-
-        </div>
-
-        <hr>
-
-        <div id="history-box" class="small">Carregando histórico...</div>
-
-        <h3>📈 Gráfico de Linha</h3>
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="card">
+        <h3 class="font-semibold mb-2">📈 Tendência (Linha)</h3>
         <canvas id="lineChart"></canvas>
-
-        <h3>📊 Gráfico de Barras</h3>
+      </div>
+      <div class="card">
+        <h3 class="font-semibold mb-2">📊 Últimas 10 Leituras (Barras)</h3>
         <canvas id="barChart"></canvas>
-
-        <h3>🥧 Gráfico de Pizza</h3>
+      </div>
+      <div class="card lg:col-span-2">
+        <h3 class="font-semibold mb-2">🍩 Distribuição (Doughnut)</h3>
         <canvas id="pieChart"></canvas>
+      </div>
+    </section>
 
-    </div>
+    <footer class="text-sm text-slate-400 text-center">
+      Atualiza a cada 7s — consulta direta ao ThingSpeak.
+    </footer>
+  </div>
 
-    <p style="margin-top: 20px;">
-        <a href="{{ url_for('dashboard') }}">⬅ Voltar</a> • 
-        <a href="{{ url_for('logout') }}">Sair</a>
-    </p>
+<script>
+/* =========== CONFIG =========== */
+const THINGSPEAK_CHANNEL_ID = "3092047";
+const THINGSPEAK_READ_KEY = "FAAOZXTN40Q8J8M9";
+const THINGSPEAK_BASE = `https://api.thingspeak.com/channels/${THINGSPEAK_CHANNEL_ID}/fields/1.json`;
+const UPDATE_INTERVAL_MS = 7000;
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+/* Chart instances */
+let lineChart = null;
+let barChart = null;
+let pieChart = null;
 
-    <!-- ===================== JS COMPLETO (FUNCIONAL) ===================== -->
-    <script>
-        async function loadLatest() {
-            const res = await fetch("/api/mq2/latest");
-            const json = await res.json();
+/* Helpers */
+function formatTimestamp(iso) {
+  if (!iso) return "—";
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString('pt-BR', { hour12:false });
+  } catch { return iso; }
+}
+function colorByValue(v) {
+  if (v >= 400) return '#ef4444';
+  if (v >= 200) return '#f59e0b';
+  return '#10b981';
+}
 
-            if (json.error) {
-                document.getElementById("lastValue").innerText = "Erro";
-                document.getElementById("time").innerText = json.error;
-                return;
-            }
+/* Load latest single feed from ThingSpeak */
+async function loadLatest() {
+  try {
+    const url = `${THINGSPEAK_BASE}?api_key=${THINGSPEAK_READ_KEY}&results=1`;
+    const r = await fetch(url, {cache: "no-store"});
+    const json = await r.json();
+    const feed = (json.feeds && json.feeds[0]) || null;
+    if (!feed || !feed.field1) {
+      document.getElementById('lastValue').innerText = 'N/D';
+      document.getElementById('lastTime').innerText = 'Sem dados';
+      return;
+    }
+    const value = parseFloat(feed.field1);
+    document.getElementById('lastValue').innerText = isNaN(value) ? 'N/D' : value.toFixed(2) + ' PPM';
+    document.getElementById('lastValue').style.color = colorByValue(value);
+    document.getElementById('lastTime').innerText = formatTimestamp(feed.created_at);
+  } catch (e) {
+    console.error('loadLatest err', e);
+    document.getElementById('lastValue').innerText = 'ERRO';
+    document.getElementById('lastTime').innerText = 'Falha ao acessar ThingSpeak';
+  }
+}
 
-            document.getElementById("lastValue").innerText = json.gas_value;
-            document.getElementById("time").innerText = json.timestamp;
-        }
+/* Load historical data (results count) */
+async function loadHistory(results=100) {
+  try {
+    const url = `${THINGSPEAK_BASE}?api_key=${THINGSPEAK_READ_KEY}&results=${results}`;
+    const r = await fetch(url, {cache: "no-store"});
+    const json = await r.json();
+    const feeds = json.feeds || [];
 
-        async function loadHistory() {
-            const res = await fetch("/api/mq2/graph-data");
-            const json = await res.json();
+    // Build arrays
+    const labels = [];
+    const values = [];
+    for (let i = 0; i < feeds.length; i++) {
+      const f = feeds[i];
+      if (!f.field1) continue;
+      labels.push(formatTimestamp(f.created_at));
+      values.push(Number(f.field1));
+    }
 
-            if (json.error) {
-                document.getElementById("history-box").innerText =
-                    "Erro ao carregar histórico: " + json.error;
-                return;
-            }
+    // Update history box (last 10)
+    const historyBox = document.getElementById('historyBox');
+    if (values.length === 0) {
+      historyBox.innerHTML = '<div class="text-slate-400">Nenhum dado disponível.</div>';
+    } else {
+      const lastN = Math.min(10, values.length);
+      let html = '<ul class="space-y-1">';
+      for (let i = values.length - 1; i >= values.length - lastN; i--) {
+        const time = labels[i] || '—';
+        const v = values[i] ?? 0;
+        const color = colorByValue(v);
+        html += `<li class="flex justify-between"><span class="text-slate-400">${time}</span><span style="color:${color}; font-weight:700">${v.toFixed(2)} PPM</span></li>`;
+      }
+      html += '</ul>';
+      historyBox.innerHTML = html;
+    }
 
-            const labels = json.labels || [];
-            const values = json.values || [];
+    renderCharts(labels, values);
+  } catch (e) {
+    console.error('loadHistory err', e);
+    document.getElementById('historyBox').innerHTML = '<div class="text-red-400">Erro ao carregar histórico</div>';
+  }
+}
 
-            if (labels.length === 0) {
-                document.getElementById("history-box").innerText =
-                    "Sem histórico disponível no MongoDB.";
-                return;
-            }
+/* Render charts with Chart.js */
+function renderCharts(labels, values) {
+  const numeric = values.map(v => Number(v) || 0);
 
-            let html = `<strong>Últimas leituras (${labels.length} total):</strong><ul>`;
+  // Line chart
+  if (lineChart) { lineChart.destroy(); lineChart = null; }
+  const ctxL = document.getElementById('lineChart').getContext('2d');
+  lineChart = new Chart(ctxL, {
+    type: 'line',
+    data: { labels, datasets: [{ label:'MQ-2 (PPM)', data: numeric, borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,0.08)', tension:0.3, pointRadius:1 }] },
+    options: { responsive:true, maintainAspectRatio:false, scales:{ x:{ ticks:{ color:'#94a3b8' } }, y:{ ticks:{ color:'#94a3b8' } } }, plugins:{ legend:{ display:false } } }
+  });
 
-            for (let i = 1; i <= Math.min(10, labels.length); i++) {
-                let index = labels.length - i;
-                html += `<li>${labels[index]} — ${values[index]}</li>`;
-            }
+  // Bar chart (last 10)
+  const last10Labels = labels.slice(-10).map(l => l.split(' ')[1] || l);
+  const last10Values = numeric.slice(-10);
+  const last10Colors = last10Values.map(v => colorByValue(v));
 
-            html += "</ul>";
-            document.getElementById("history-box").innerHTML = html;
+  if (barChart) { barChart.destroy(); barChart = null; }
+  const ctxB = document.getElementById('barChart').getContext('2d');
+  barChart = new Chart(ctxB, {
+    type: 'bar',
+    data: { labels: last10Labels, datasets: [{ label:'Últimas 10', data: last10Values, backgroundColor: last10Colors }] },
+    options: { responsive:true, maintainAspectRatio:false, scales:{ x:{ ticks:{ color:'#94a3b8' } }, y:{ ticks:{ color:'#94a3b8' } } }, plugins:{ legend:{ display:false } } }
+  });
 
-            renderCharts(labels, values);
-        }
+  // Pie / Doughnut distribution
+  const low = numeric.filter(v => v < 200).length;
+  const med = numeric.filter(v => v >= 200 && v < 400).length;
+  const high = numeric.filter(v => v >= 400).length;
 
-        let lineChart, barChart, pieChart;
+  if (pieChart) { pieChart.destroy(); pieChart = null; }
+  const ctxP = document.getElementById('pieChart').getContext('2d');
+  pieChart = new Chart(ctxP, {
+    type: 'doughnut',
+    data: {
+      labels:['Baixo (<200)','Médio (200–399)','Alto (>=400)'],
+      datasets:[{ data:[low,med,high], backgroundColor:['#10b981','#f59e0b','#ef4444'] }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{ color:'#e6eef8' } } } }
+  });
+}
 
-        function renderCharts(labels, values) {
-            const numericValues = values.map(n => Number(n));
-
-            if (lineChart) lineChart.destroy();
-            lineChart = new Chart(document.getElementById('lineChart'), {
-                type: 'line',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: "Leituras MQ-2",
-                        data: numericValues,
-                        borderColor: "#00ffa3",
-                        tension: 0.35,
-                        borderWidth: 2
-                    }]
-                },
-                options: { scales: { y: { color: "#fff" }, x: { color: "#fff" } } }
-            });
-
-            if (barChart) barChart.destroy();
-            barChart = new Chart(document.getElementById('barChart'), {
-                type: 'bar',
-                data: {
-                    labels: labels.slice(-10),
-                    datasets: [{
-                        label: "Últimas Leituras",
-                        data: numericValues.slice(-10),
-                        backgroundColor: "#ffd166"
-                    }]
-                }
-            });
-
-            if (pieChart) pieChart.destroy();
-            pieChart = new Chart(document.getElementById('pieChart'), {
-                type: 'pie',
-                data: {
-                    labels: ["Baixo", "Médio", "Alto"],
-                    datasets: [{
-                        data: [
-                            numericValues.filter(v => v < 200).length,
-                            numericValues.filter(v => v >= 200 && v < 400).length,
-                            numericValues.filter(v => v >= 400).length
-                        ],
-                        backgroundColor: [
-                            "#00ffa3dd",
-                            "#ffd166dd",
-                            "#ff4d4ddd"
-                        ]
-                    }]
-                }
-            });
-        }
-
-        async function refreshAll() {
-            await loadLatest();
-            await loadHistory();
-        }
-
-        refreshAll();
-        setInterval(refreshAll, 7000);
-    </script>
-
+/* Refresh loop */
+async function refreshAll() {
+  await loadLatest();
+  await loadHistory(100);
+}
+document.addEventListener('DOMContentLoaded', () => {
+  refreshAll();
+  setInterval(refreshAll, UPDATE_INTERVAL_MS);
+});
+</script>
 </body>
 </html>
