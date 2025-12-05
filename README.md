@@ -1,4 +1,4 @@
-# Flask MFA v2 — UI Melhorada + Dashboard com MQ-2
+# CleanFlow - Flask MFA + Dashboard com MQ-2 🌿
 
 Este projeto é uma aplicação Flask com autenticação MFA (TOTP) integrada, UI aprimorada com Bootstrap, sistema de registro/login, além de um dashboard completo com estatísticas e uma página dedicada ao sensor MQ-2 (simulado).
 
