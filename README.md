@@ -6,6 +6,14 @@ A aplicação foi desenvolvida para ser simples de executar localmente e também
 
 ---
 
+## 🌐 Deploy Online
+
+A aplicação já está **disponível e online no Render**:
+
+👉 **https://iot-9d38.onrender.com/**  
+
+---
+
 ## 📁 Estrutura do Projeto
 
 IOT-main/  
@@ -100,7 +108,7 @@ http://localhost:5000
 
 ## 📦 Deploy no Render
 
-A aplicação já está preparada para o Render.
+A aplicação já está configurada para deploy no Render.
 
 ### Comando de start:
 ```
